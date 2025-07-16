@@ -2,10 +2,7 @@ import React from 'react';
 import { StyleSheet, Platform, StatusBar } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-export default function MeteoMapScreen() {
-  const windyUrl = 'https://www.windy.com/?45.901,25.334,7';
-
-  // Injecter le meta viewport pour permettre zoom / scroll si besoin
+export default function RomatsaMapScreen() {
   const injectedJavaScript = `
     const meta = document.createElement('meta'); 
     meta.setAttribute('name', 'viewport'); 
@@ -16,7 +13,7 @@ export default function MeteoMapScreen() {
 
   return (
     <WebView
-      source={{ uri: windyUrl }}
+      source={{ uri: 'https://flightplan.romatsa.ro/init/default/index' }}
       style={styles.webview}
       originWhitelist={['*']}
       javaScriptEnabled={true}

@@ -17,6 +17,7 @@
     "expo-file-system": "~18.1.11",
     "expo-file-viewer": "^0.1.0",
     "expo-location": "~18.1.6",
+    "expo-sharing": "~13.1.5",
     "expo-status-bar": "~2.2.3",
     "expo-web-browser": "~14.2.0",
     "parent-module": "^3.1.0",
@@ -30,7 +31,7 @@
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
-    "react-native-webview": "^13.13.5"
+    "react-native-webview": "^13.15.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

@@ -84,6 +84,10 @@ export default function HomeScreen() {
             <Ionicons name="locate" size={24} color="white" />
           </TouchableOpacity>
 
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('RomatsaMap')}>
+            <Ionicons name="map" size={24} color="white" />
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VFR')}>
             <Ionicons name="map-outline" size={24} color="white" />
           </TouchableOpacity>

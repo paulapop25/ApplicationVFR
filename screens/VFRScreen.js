@@ -8,36 +8,49 @@ import {
   Alert,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import { Asset } from 'expo-asset';
+import * as Sharing from 'expo-sharing';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { airports } from '../data/charts'; // Assure-toi que `chart` est un import require(...)
+import { airports } from '../data/charts';
 
 export default function VFRScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-  const handleOpenPDF = async (pdfModule, airportName) => {
+  const handleOpenPDF = async (pdfUrl, airportName) => {
     try {
-      const asset = Asset.fromModule(pdfModule);
-      await asset.downloadAsync();
-
-      const sanitizedName = airportName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const fileName = `${sanitizedName}.pdf`;
-      const destinationUri = FileSystem.documentDirectory + fileName;
-
-      const fileInfo = await FileSystem.getInfoAsync(destinationUri);
-      if (!fileInfo.exists) {
-        await FileSystem.copyAsync({
-          from: asset.localUri || asset.uri,
-          to: destinationUri,
-        });
+      if (!pdfUrl) {
+        Alert.alert('Erreur', `Pas de PDF disponible pour ${airportName}`);
+        return;
       }
-    console.log('Navigating to PDF:', destinationUri);
-      navigation.navigate('PDFViewer', { uri: destinationUri });
+
+      // Nettoyage de l'URL
+      const cleanUrl = pdfUrl.trim();
+
+      // Nom du fichier local
+      const filename = cleanUrl.split('/').pop();
+      const localUri = FileSystem.documentDirectory + filename;
+
+      // Vérifie si le fichier est déjà présent localement
+      const fileInfo = await FileSystem.getInfoAsync(localUri);
+
+      if (!fileInfo.exists) {
+        console.log('Téléchargement en cours...');
+        await FileSystem.downloadAsync(cleanUrl, localUri);
+        console.log('Fichier téléchargé à :', localUri);
+      } else {
+        console.log('Fichier déjà présent localement :', localUri);
+      }
+
+      // Ouverture avec une app externe
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(localUri);
+      } else {
+        Alert.alert("Aucune application disponible", "Installe une application pour lire les PDF.");
+      }
     } catch (error) {
-      console.error('Erreur ouverture PDF:', error);
-      Alert.alert('Erreur', `Impossible d'ouvrir la carte de ${airportName}`);
+      console.error('Erreur lors de l\'ouverture du PDF :', error);
+      Alert.alert("Erreur", "Impossible d'ouvrir le fichier PDF.");
     }
   };
 

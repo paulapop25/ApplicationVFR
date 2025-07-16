@@ -9,6 +9,7 @@ import NotamScreen from './screens/NotamScreen';
 import MeteoScreen from './screens/MeteoScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import PDFViewerScreen from './screens/PDFViewerScreen';
+import RomatsaMapScreen from './screens/RomatsaMapScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,7 @@ export default function App() {
           <Stack.Screen name="Meteo" component={MeteoScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="PDFViewer" component={PDFViewerScreen} />
+          <Stack.Screen name="RomatsaMap" component={RomatsaMapScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
