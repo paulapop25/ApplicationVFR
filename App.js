@@ -10,23 +10,28 @@ import MeteoScreen from './screens/MeteoScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import PDFViewerScreen from './screens/PDFViewerScreen';
 import RomatsaMapScreen from './screens/RomatsaMapScreen';
+import RoutePlannerScreen from './screens/RoutePlannerScreen';
+import { RouteProvider } from './context/routecontext';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="VFR" component={VFRScreen} />
-          <Stack.Screen name="Notam" component={NotamScreen} />
-          <Stack.Screen name="Meteo" component={MeteoScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
-          <Stack.Screen name="PDFViewer" component={PDFViewerScreen} />
-          <Stack.Screen name="RomatsaMap" component={RomatsaMapScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <RouteProvider>
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="VFR" component={VFRScreen} />
+            <Stack.Screen name="Notam" component={NotamScreen} />
+            <Stack.Screen name="Meteo" component={MeteoScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="PDFViewer" component={PDFViewerScreen} />
+            <Stack.Screen name="RomatsaMap" component={RomatsaMapScreen} />
+            <Stack.Screen name="RoutePlanner" component={RoutePlannerScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </RouteProvider>
     </SafeAreaProvider>
   );
 }

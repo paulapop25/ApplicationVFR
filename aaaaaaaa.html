@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <title>METAR / TAF / NOTAM România</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2em;
+            background: #f8f8f8;
+        }
+
+        input,
+        select,
+        button {
+            padding: 8px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        input {
+            width: 200px;
+        }
+
+        select {
+            width: 300px;
+        }
+
+        button {
+            background: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        h3,
+        h4 {
+            margin-top: 20px;
+        }
+
+        pre {
+            background: #222;
+            color: #0f0;
+            padding: 1em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .metar-block,
+        .taf-block {
+            background: #fff;
+            padding: 10px;
+            margin-top: 10px;
+            border-left: 5px solid #007acc;
+        }
+
+        .metar-block.important,
+        .taf-block.important {
+            border-color: red;
+            background: #ffeeee;
+        }
+
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 150px;
+        }
+
+        .value {
+            font-weight: normal;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>METAR / TAF / NOTAM – Aeroporturi din România</h2>
+
+    <input type="text" id="icaoInput" placeholder="Introdu cod ICAO (ex: LROP)">
+    <button onclick="searchIcao()">Caută</button>
+    <br>
+    <select id="airportSelect">
+        <option value="">— Alege un aeroport —</option>
+        <option value="LROP">LROP - București Henri Coandă</option>
+        <option value="LRBS">LRBS - București Băneasa</option>
+        <option value="LRCL">LRCL - Cluj-Napoca</option>
+        <option value="LRSB">LRSB - Sibiu</option>
+        <option value="LRTR">LRTR - Timișoara</option>
+        <option value="LRTM">LRTM - Târgu Mureș</option>
+        <option value="LRIA">LRIA - Iași</option>
+        <option value="LRCK">LRCK - Constanța</option>
+        <option value="LRAR">LRAR - Arad</option>
+        <option value="LRSM">LRSM - Satu Mare</option>
+        <option value="LRBM">LRBM - Baia Mare</option>
+        <option value="LRBC">LRBC - Bacău</option>
+        <option value="LRSV">LRSV - Suceava</option>
+    </select>
+    <br>
+    <button onclick="openNotam()">Vezi NOTAM FAA</button>
+
+    <div id="metar"></div>
+    <div id="taf"></div>
+
+    <script>
+        const input = document.getElementById("icaoInput");
+        const select = document.getElementById("airportSelect");
+
+        select.addEventListener("change", () => {
+            const code = select.value;
+            input.value = code;
+        });
+
+        function searchIcao() {
+            const code = input.value.toUpperCase().trim();
+            if (code.length === 4) {
+                select.value = code;
+                loadData(code);
+            } else {
+                alert("Introduceți un cod ICAO valid (4 litere).");
+            }
+        }
+
+        function openNotam() {
+            const code = input.value.toUpperCase().trim();
+            if (code.length === 4) {
+                window.open(`https://notams.aim.faa.gov/notamSearch/nsapp.html#/search/${code}`, "_blank");
+            } else {
+                alert("Introduceți un cod ICAO valid.");
+            }
+        }
+
+        function loadData(code) {
+            // METAR
+            fetch('https://api.allorigins.win/get?url=' +
+                encodeURIComponent(`https://tgftp.nws.noaa.gov/data/observations/metar/stations/${code}.TXT`))
+                .then(r => r.json())
+                .then(data => {
+                    const content = data?.contents?.trim();
+                    if (!content || content === "Not Found") {
+                        document.getElementById("metar").innerHTML = `
+              <h3>METAR ${code}</h3>
+              <pre class="error">Date indisponibile</pre>`;
+                    } else {
+                        document.getElementById("metar").innerHTML = `
+              <h3>METAR ${code}</h3>
+              <pre>${content}</pre>
+              <h4>Decodare METAR</h4>
+              ${decodeMetar(content)}`;
+                    }
+                }).catch(() => {
+                    document.getElementById("metar").innerHTML = `
+            <h3>METAR ${code}</h3>
+            <pre class="error">Eroare la încărcare</pre>`;
+                });
+
+            // TAF
+            fetch('https://api.allorigins.win/get?url=' +
+                encodeURIComponent(`https://tgftp.nws.noaa.gov/data/forecasts/taf/stations/${code}.TXT`))
+                .then(r => r.json())
+                .then(data => {
+                    const content = data?.contents?.trim();
+                    if (!content || content === "Not Found") {
+                        document.getElementById("taf").innerHTML = `
+              <h3>TAF ${code}</h3>
+              <pre class="error">Date indisponibile</pre>`;
+                    } else {
+                        document.getElementById("taf").innerHTML = `
+              <h3>TAF ${code}</h3>
+              <pre>${content}</pre>
+              <h4>Decodare TAF</h4>
+              ${decodeTaf(content)}`;
+                    }
+                }).catch(() => {
+                    document.getElementById("taf").innerHTML = `
+            <h3>TAF ${code}</h3>
+            <pre class="error">Eroare la încărcare</pre>`;
+                });
+        }
+
+        function decodeMetar(raw) {
+            let html = '';
+            const wind = raw.match(/(\d{3}|VRB)(\d{2})KT/);
+            const vis = raw.match(/\s(\d{4})\s/);
+            const cavok = raw.includes("CAVOK");
+            const tsra = raw.includes("TSRA");
+            const rain = raw.includes("RA");
+            const bkn = raw.match(/BKN(\d{3})/);
+            const sct = raw.match(/SCT(\d{3})/);
+            const temp = raw.match(/M?(\d{2})\/M?(\d{2})/);
+            const pressure = raw.match(/Q(\d{4})/);
+            const nosig = raw.includes("NOSIG");
+
+            html += `<div class="metar-block"><span class="label">Vânt:</span><span class="value">${wind ? `${wind[1]}° la ${wind[2]} kt` : 'necunoscut'}</span></div>`;
+            html += `<div class="metar-block"><span class="label">Vizibilitate:</span><span class="value">${cavok ? '≥10 km, fără nori semnificativi, fără fenomene meteo (CAVOK)' :
+                    (vis ? `${vis[1]} m` : 'necunoscut')
+                }</span></div>`;
+
+            if (bkn || sct) {
+                html += `<div class="metar-block"><span class="label">Nori:</span><span class="value">${bkn ? `Broken la ${parseInt(bkn[1]) * 100} ft` : ''} ${sct ? `Scattered la ${parseInt(sct[1]) * 100} ft` : ''}</span></div>`;
+            }
+
+            if (tsra || rain) {
+                html += `<div class="metar-block important"><span class="label">Fenomen:</span><span class="value">${tsra ? 'Furtună cu ploaie' : ''} ${rain && !tsra ? 'Ploaie' : ''}</span></div>`;
+            }
+
+            if (temp) {
+                html += `<div class="metar-block"><span class="label">Temperatură / Rouă:</span><span class="value">${temp[1]}°C / ${temp[2]}°C</span></div>`;
+            }
+
+            if (pressure) {
+                html += `<div class="metar-block"><span class="label">Presiune QNH:</span><span class="value">${pressure[1]} hPa</span></div>`;
+            }
+
+            if (nosig) {
+                html += `<div class="metar-block"><span class="label">Tendință:</span><span class="value">Nicio schimbare semnificativă</span></div>`;
+            }
+
+            return html || '<div class="metar-block">Nu s-au putut interpreta datele</div>';
+        }
+
+        function decodeTaf(raw) {
+            let html = '';
+            if (!raw) return '<div class="taf-block">Date indisponibile</div>';
+
+            const lines = raw.split(/\n/);
+            lines.forEach(line => {
+                if (line.includes("BECMG")) html += `<div class="taf-block"><span class="label">BECMG:</span><span class="value">Condiții în schimbare treptată</span></div>`;
+                if (line.includes("TEMPO")) html += `<div class="taf-block"><span class="label">TEMPO:</span><span class="value">Condiții temporare</span></div>`;
+                if (line.includes("PROB30") || line.includes("PROB40")) html += `<div class="taf-block"><span class="label">Probabilitate:</span><span class="value">${line.match(/PROB\d+/)[0]} - condiții speciale</span></div>`;
+                if (line.includes("TSRA")) html += `<div class="taf-block important"><span class="label">Fenomen:</span><span class="value">Furtună cu ploaie</span></div>`;
+                if (line.includes("CAVOK")) html += `<div class="taf-block"><span class="label">Vizibilitate:</span><span class="value">CAVOK</span></div>`;
+                if (line.match(/BKN\d{3}/)) html += `<div class="taf-block"><span class="label">Nori:</span><span class="value">${line.match(/BKN\d{3}/)[0]}</span></div>`;
+                if (line.match(/SCT\d{3}/)) html += `<div class="taf-block"><span class="label">Nori:</span><span class="value">${line.match(/SCT\d{3}/)[0]}</span></div>`;
+                if (line.match(/(\d{4})\/(\d{4})/)) html += `<div class="taf-block"><span class="label">Interval:</span><span class="value">${line.match(/(\d{4})\/(\d{4})/)[0]}</span></div>`;
+            });
+
+            return html || '<div class="taf-block">TAF nedecodat</div>';
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const defaultCode = "LROP";
+            input.value = defaultCode;
+            select.value = defaultCode;
+            loadData(defaultCode);
+        });
+    </script>
+
+</body>
+
+</html>
